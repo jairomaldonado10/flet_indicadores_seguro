@@ -1,0 +1,5 @@
+flet
+oracledb
+bcrypt
+python-dotenv
+requests
