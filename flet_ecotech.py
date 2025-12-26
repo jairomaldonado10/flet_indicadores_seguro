@@ -1,6 +1,7 @@
 import flet as ft
 from ecotech import Database, Auth, Finance, Consultas
 
+
 class App:
     def __init__(self, page: ft.Page):
         self.page = page
@@ -31,10 +32,7 @@ class App:
                 on_click=on_click,
                 style=ft.ButtonStyle(
                     color="black",
-                    text_style=ft.TextStyle(
-                        size=16,
-                        weight="bold"
-                    )
+                    text_style=ft.TextStyle(size=16, weight="bold")
                 )
             )
         )
@@ -60,40 +58,20 @@ class App:
     def login(self):
         self.page.clean()
 
-        self.in_user = ft.TextField(
-            label="Nombre de usuario",
-            width=420,
-            bgcolor="#1F2933",
-            border_radius=14
-        )
-
-        self.in_pass = ft.TextField(
-            label="Contraseña",
-            password=True,
-            can_reveal_password=True,
-            width=420,
-            bgcolor="#1F2933",
-            border_radius=14
-        )
-
+        self.in_user = ft.TextField(label="Usuario", width=420, bgcolor="#1F2933", border_radius=14)
+        self.in_pass = ft.TextField(label="Contraseña", password=True, can_reveal_password=True,
+                                    width=420, bgcolor="#1F2933", border_radius=14)
         self.msg = ft.Text("", color="#EF4444")
 
         self.page.add(self.card([
             ft.Text("Ecotech Solutions", size=34, weight="bold"),
-            ft.Text("Plataforma de indicadores económicos", color="#94A3B8"),
+            ft.Text("Indicadores económicos en tiempo real", color="#94A3B8"),
             self.in_user,
             self.in_pass,
-            self.shadow_button(
-                "Iniciar sesión",
-                self.do_login,
-                "#22D3EE"
-            ),
+            self.shadow_button("Iniciar sesión", self.do_login, "#22D3EE"),
             self.msg,
-            ft.TextButton(
-                "Registrarse",
-                on_click=lambda e: self.register(),
-                style=ft.ButtonStyle(color="#38BDF8")
-            )
+            ft.TextButton("Registrarse", on_click=lambda e: self.register(),
+                          style=ft.ButtonStyle(color="#38BDF8"))
         ]))
 
     def do_login(self, e):
@@ -109,8 +87,8 @@ class App:
 
         self.in_id = ft.TextField(label="ID", width=420, bgcolor="#1F2933", border_radius=14)
         self.in_user = ft.TextField(label="Usuario", width=420, bgcolor="#1F2933", border_radius=14)
-        self.in_pass = ft.TextField(label="Contraseña", password=True, width=420, bgcolor="#1F2933", border_radius=14)
-
+        self.in_pass = ft.TextField(label="Contraseña", password=True,
+                                    width=420, bgcolor="#1F2933", border_radius=14)
         self.msg = ft.Text("", color="#EF4444")
 
         self.page.add(self.card([
@@ -120,7 +98,8 @@ class App:
             self.in_pass,
             self.shadow_button("Registrar", self.do_register, "#38BDF8"),
             self.msg,
-            ft.TextButton("Volver", on_click=lambda e: self.login(), style=ft.ButtonStyle(color="#94A3B8"))
+            ft.TextButton("Volver", on_click=lambda e: self.login(),
+                          style=ft.ButtonStyle(color="#94A3B8"))
         ]))
 
     def do_register(self, e):
@@ -161,7 +140,8 @@ class App:
             self.dd,
             self.shadow_button("Consultar", self.do_indicator, "#22D3EE"),
             self.msg,
-            ft.TextButton("Volver", on_click=lambda e: self.menu(), style=ft.ButtonStyle(color="#94A3B8"))
+            ft.TextButton("Volver", on_click=lambda e: self.menu(),
+                          style=ft.ButtonStyle(color="#94A3B8"))
         ]))
 
     def do_indicator(self, e):
@@ -194,10 +174,13 @@ class App:
         self.page.add(self.card([
             ft.Text("Historial de consultas", size=26, weight="bold"),
             col,
-            ft.TextButton("Volver", on_click=lambda e: self.menu(), style=ft.ButtonStyle(color="#94A3B8"))
+            ft.TextButton("Volver", on_click=lambda e: self.menu(),
+                          style=ft.ButtonStyle(color="#94A3B8"))
         ]))
+
 
 def main(page: ft.Page):
     App(page)
+
 
 ft.app(target=main)
