@@ -1,7 +1,8 @@
-import oracledb
-import bcrypt
-import requests
 import os
+import bcrypt
+import oracledb
+import requests
+import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -25,67 +26,73 @@ class Database:
                 cur.execute(sql, params or {})
                 if fetch:
                     return cur.fetchall()
-            conn.commit()
+                conn.commit()
 
 class Auth:
     @staticmethod
-    def register(db, user_id, name, password):
-        name = name.strip().upper()
+    def register(db, user_id, username, password):
+        if not username or not password:
+            raise ValueError("Campos vacíos")
+
+        if len(password) < 6:
+            raise ValueError("Contraseña mínima 6 caracteres")
+
         hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).hex()
 
         db.execute(
-            "INSERT INTO USERS (ID, NAME, PASSWORD) VALUES (:id, :n, :p)",
-            {"id": user_id, "n": name, "p": hashed}
+            "INSERT INTO USERS (ID, NAME, PASSWORD) VALUES (:id, :name, :pass)",
+            {"id": user_id, "name": username, "pass": hashed}
         )
 
     @staticmethod
-    def login(db, name, password):
-        name = name.strip().upper()
-        r = db.execute(
-            "SELECT PASSWORD FROM USERS WHERE NAME = :n",
-            {"n": name},
+    def login(db, username, password):
+        rows = db.execute(
+            "SELECT PASSWORD FROM USERS WHERE NAME = :name",
+            {"name": username},
             fetch=True
         )
-        if not r:
+
+        if not rows:
             return False
-        return bcrypt.checkpw(password.encode(), bytes.fromhex(r[0][0]))
+
+        stored = bytes.fromhex(rows[0][0])
+        return bcrypt.checkpw(password.encode(), stored)
 
 class Finance:
-    BASE = "https://mindicador.cl/api"
-
     @staticmethod
-    def get(indicator):
-        r = requests.get(f"{Finance.BASE}/{indicator}", timeout=10)
+    def get(indicator, date=None):
+        url = f"https://mindicador.cl/api/{indicator}"
+        if date:
+            date = date.replace("-", "")
+            url += f"/{date}"
+
+        r = requests.get(url, timeout=10)
         data = r.json()
-        return data["serie"][0]["valor"], data["serie"][0]["fecha"]
+
+        serie = data["serie"][0]
+        return serie["valor"], serie["fecha"]
 
 class Consultas:
     @staticmethod
-    def guardar(db, name, indicator, fecha, valor):
+    def save(db, user, indicator, value):
         db.execute(
             """
-            INSERT INTO CONSULTAS (NAME, INDICATOR, DATE_QUERY, VALUE, SOURCE)
-            VALUES (:n, :i, TO_DATE(:d, 'YYYY-MM-DD'), :v, 'mindicador.cl')
+            INSERT INTO CONSULTAS
+            (NAME, INDICATOR, VALUE, SOURCE, DATE_QUERY)
+            VALUES (:n, :i, :v, 'mindicador.cl', SYSDATE)
             """,
-            {
-                "n": name,
-                "i": indicator,
-                "d": fecha[:10],
-                "v": float(valor)
-            }
+            {"n": user, "i": indicator, "v": value}
         )
 
     @staticmethod
-    def historial(db, name):
+    def history(db, user):
         return db.execute(
             """
-            SELECT INDICATOR,
-                   TO_CHAR(DATE_QUERY,'YYYY-MM-DD'),
-                   VALUE
+            SELECT INDICATOR, VALUE, DATE_QUERY
             FROM CONSULTAS
             WHERE NAME = :n
-            ORDER BY CREATED_AT DESC
+            ORDER BY DATE_QUERY DESC
             """,
-            {"n": name},
+            {"n": user},
             fetch=True
         )

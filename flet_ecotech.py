@@ -5,157 +5,197 @@ class App:
     def __init__(self, page: ft.Page):
         self.page = page
         self.page.title = "Ecotech Solutions"
-        self.page.theme_mode = ft.ThemeMode.DARK
-        self.page.bgcolor = "#0f172a"
+        self.page.bgcolor = "#0F172A"
         self.page.horizontal_alignment = "center"
         self.page.vertical_alignment = "center"
-        self.page.padding = 20
 
         self.db = Database()
         self.user = None
 
-        self.page_login()
+        self.login()
 
-    def card(self, title, controls):
+    def shadow_button(self, text, on_click, color):
         return ft.Container(
             width=420,
-            padding=30,
-            bgcolor="#111827",
+            height=50,
             border_radius=16,
-            border=ft.border.all(1, "#1f2937"),
-            shadow=ft.BoxShadow(blur_radius=30, color="black"),
+            bgcolor=color,
+            shadow=ft.BoxShadow(
+                blur_radius=18,
+                spread_radius=1,
+                color="#00000088",
+                offset=ft.Offset(0, 6)
+            ),
+            content=ft.TextButton(
+                text=text,
+                on_click=on_click,
+                style=ft.ButtonStyle(
+                    color="black",
+                    text_style=ft.TextStyle(
+                        size=16,
+                        weight="bold"
+                    )
+                )
+            )
+        )
+
+    def card(self, controls):
+        return ft.Container(
+            width=520,
+            padding=36,
+            bgcolor="#111827",
+            border_radius=22,
+            shadow=ft.BoxShadow(
+                blur_radius=30,
+                color="#000000AA",
+                offset=ft.Offset(0, 10)
+            ),
             content=ft.Column(
-                spacing=18,
                 horizontal_alignment="center",
-                controls=[ft.Text(title, size=22, weight=ft.FontWeight.BOLD)] + controls
+                spacing=20,
+                controls=controls
             )
         )
 
-    def input(self, label, password=False):
-        return ft.TextField(
-            label=label,
-            width=320,
-            password=password,
-            can_reveal_password=password,
-            filled=True,
-            bgcolor="#020617",
-            border_radius=10
+    def login(self):
+        self.page.clean()
+
+        self.in_user = ft.TextField(
+            label="Nombre de usuario",
+            width=420,
+            bgcolor="#1F2933",
+            border_radius=14
         )
 
-    def button(self, text, action):
-        return ft.ElevatedButton(
-            text,
-            width=320,
-            height=44,
-            on_click=action,
-            style=ft.ButtonStyle(
-                bgcolor="#2563eb",
-                color="white",
-                shape=ft.RoundedRectangleBorder(radius=10)
-            )
+        self.in_pass = ft.TextField(
+            label="Contraseña",
+            password=True,
+            can_reveal_password=True,
+            width=420,
+            bgcolor="#1F2933",
+            border_radius=14
         )
 
-    def link(self, text, action):
-        return ft.TextButton(text, on_click=action)
+        self.msg = ft.Text("", color="#EF4444")
 
-    def page_login(self):
-        self.page.controls.clear()
-        self.in_user = self.input("Nombre de usuario")
-        self.in_pass = self.input("Contraseña", True)
-        self.msg = ft.Text("", color="red")
-
-        self.page.add(self.card("Ecotech Solutions", [
+        self.page.add(self.card([
+            ft.Text("Ecotech Solutions", size=34, weight="bold"),
+            ft.Text("Plataforma de indicadores económicos", color="#94A3B8"),
             self.in_user,
             self.in_pass,
-            self.button("Iniciar sesión", self.handle_login),
+            self.shadow_button(
+                "Iniciar sesión",
+                self.do_login,
+                "#22D3EE"
+            ),
             self.msg,
-            self.link("Registrarse", lambda e: self.page_register())
+            ft.TextButton(
+                "Registrarse",
+                on_click=lambda e: self.register(),
+                style=ft.ButtonStyle(color="#38BDF8")
+            )
         ]))
-        self.page.update()
 
-    def handle_login(self, e):
+    def do_login(self, e):
         if Auth.login(self.db, self.in_user.value, self.in_pass.value):
-            self.user = self.in_user.value.strip().upper()
-            self.page_menu()
+            self.user = self.in_user.value
+            self.menu()
         else:
             self.msg.value = "Credenciales inválidas"
             self.page.update()
 
-    def page_register(self):
-        self.page.controls.clear()
-        self.in_id = self.input("ID de usuario")
-        self.in_user = self.input("Nombre de usuario")
-        self.in_pass = self.input("Contraseña", True)
-        self.msg = ft.Text("", color="red")
+    def register(self):
+        self.page.clean()
 
-        self.page.add(self.card("Registro", [
+        self.in_id = ft.TextField(label="ID", width=420, bgcolor="#1F2933", border_radius=14)
+        self.in_user = ft.TextField(label="Usuario", width=420, bgcolor="#1F2933", border_radius=14)
+        self.in_pass = ft.TextField(label="Contraseña", password=True, width=420, bgcolor="#1F2933", border_radius=14)
+
+        self.msg = ft.Text("", color="#EF4444")
+
+        self.page.add(self.card([
+            ft.Text("Registro de usuario", size=28, weight="bold"),
             self.in_id,
             self.in_user,
             self.in_pass,
-            self.button("Registrarse", self.handle_register),
+            self.shadow_button("Registrar", self.do_register, "#38BDF8"),
             self.msg,
-            self.link("Volver", lambda e: self.page_login())
+            ft.TextButton("Volver", on_click=lambda e: self.login(), style=ft.ButtonStyle(color="#94A3B8"))
         ]))
-        self.page.update()
 
-    def handle_register(self, e):
+    def do_register(self, e):
         try:
             Auth.register(self.db, int(self.in_id.value), self.in_user.value, self.in_pass.value)
-            self.msg.color = "green"
+            self.msg.color = "#22C55E"
             self.msg.value = "Usuario registrado correctamente"
-        except:
-            self.msg.color = "red"
-            self.msg.value = "Error al registrar"
+        except Exception as ex:
+            self.msg.color = "#EF4444"
+            self.msg.value = str(ex)
         self.page.update()
 
-    def page_menu(self):
-        self.page.controls.clear()
-        self.page.add(self.card(f"Bienvenido {self.user}", [
-            self.button("Consultar indicador", lambda e: self.page_indicator()),
-            self.button("Historial", lambda e: self.page_history()),
-            self.link("Cerrar sesión", lambda e: self.page_login())
+    def menu(self):
+        self.page.clean()
+
+        self.page.add(self.card([
+            ft.Text(f"Bienvenido {self.user}", size=26, weight="bold"),
+            self.shadow_button("Consultar indicador", lambda e: self.indicators(), "#22D3EE"),
+            self.shadow_button("Historial", lambda e: self.history(), "#38BDF8"),
+            self.shadow_button("Cerrar sesión", lambda e: self.login(), "#F87171")
         ]))
-        self.page.update()
 
-    def page_indicator(self):
-        self.page.controls.clear()
+    def indicators(self):
+        self.page.clean()
+
         self.dd = ft.Dropdown(
-            width=320,
+            width=420,
             value="uf",
-            options=[ft.dropdown.Option(i) for i in ["uf", "dolar", "euro", "utm"]]
+            options=[ft.dropdown.Option(i) for i in ["uf", "dolar", "euro", "utm"]],
+            bgcolor="#1F2933",
+            border_radius=14
         )
+
         self.msg = ft.Text("")
 
-        self.page.add(self.card("Indicadores Económicos", [
+        self.page.add(self.card([
+            ft.Text("Indicadores económicos", size=26, weight="bold"),
             self.dd,
-            self.button("Consultar", self.handle_indicator),
+            self.shadow_button("Consultar", self.do_indicator, "#22D3EE"),
             self.msg,
-            self.link("Volver", lambda e: self.page_menu())
+            ft.TextButton("Volver", on_click=lambda e: self.menu(), style=ft.ButtonStyle(color="#94A3B8"))
         ]))
-        self.page.update()
 
-    def handle_indicator(self, e):
+    def do_indicator(self, e):
         try:
-            valor, fecha = Finance.get(self.dd.value)
-            Consultas.guardar(self.db, self.user, self.dd.value.upper(), fecha, valor)
-            self.msg.color = "white"
-            self.msg.value = f"{self.dd.value.upper()} = {valor}"
-        except Exception as err:
-            self.msg.color = "red"
-            self.msg.value = str(err)
+            value, _ = Finance.get(self.dd.value)
+            Consultas.save(self.db, self.user, self.dd.value.upper(), value)
+            self.msg.color = "#22C55E"
+            self.msg.value = f"{self.dd.value.upper()} = {value}"
+        except:
+            self.msg.color = "#EF4444"
+            self.msg.value = "Error al consultar indicador"
         self.page.update()
 
-    def page_history(self):
-        self.page.controls.clear()
-        rows = Consultas.historial(self.db, self.user)
-        items = [ft.Text(f"{r[0]} | {r[1]} | {r[2]}") for r in rows]
-        if not items:
-            items.append(ft.Text("Sin registros"))
+    def history(self):
+        self.page.clean()
 
-        self.page.add(self.card("Historial", items + [
-            self.link("Volver", lambda e: self.page_menu())
+        rows = Consultas.history(self.db, self.user)
+        col = ft.Column(scroll="auto", spacing=10)
+
+        for r in rows:
+            col.controls.append(
+                ft.Container(
+                    padding=12,
+                    bgcolor="#1F2933",
+                    border_radius=14,
+                    content=ft.Text(f"{r[0]} | {r[1]} | {r[2]}")
+                )
+            )
+
+        self.page.add(self.card([
+            ft.Text("Historial de consultas", size=26, weight="bold"),
+            col,
+            ft.TextButton("Volver", on_click=lambda e: self.menu(), style=ft.ButtonStyle(color="#94A3B8"))
         ]))
-        self.page.update()
 
 def main(page: ft.Page):
     App(page)
